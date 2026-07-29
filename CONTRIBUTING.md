@@ -29,6 +29,21 @@ npm run build    # must succeed
 - Context provider (`RookCephDataProvider`) wraps each route component in `index.tsx`
 - Tests: vitest + @testing-library/react, mock with `vi.mock('@kinvolk/headlamp-plugin/lib', ...)`
 
+## Agent tooling: stale git push credential
+
+If `git push`/`fetch` fails with "Password authentication is not supported",
+the shared `credential.helper=store` cache is serving a stale, hourly-expiring
+GitHub App installation token (`ghs_...`). Don't debug the cache — mint a
+fresh token instead:
+
+1. Re-derive an isolated `GH_CONFIG_DIR` (don't trust an inherited one) and
+   generate a fresh installation token from `GITHUB_APP_ID` /
+   `GITHUB_APP_INSTALLATION_ID` / `GITHUB_APP_PEM`.
+2. Push over an `x-access-token:<fresh-token>@github.com/...` remote URL for
+   that one operation rather than rewriting the shared `~/.git-credentials`
+   file — the store is shared across agents/companies, so leave it alone.
+3. Never print, log, or commit the token value.
+
 ## License
 
 By contributing, you agree your contributions will be licensed under Apache-2.0.
