@@ -25,7 +25,6 @@ Adds a **Rook-Ceph** top-level sidebar section to Headlamp with full cluster obs
 - **PVC Detail Injection** — Rook-Ceph section automatically injected into Headlamp's PVC detail view (driver, type, pool, volume handle, PV name)
 - **PV Detail Injection** — Rook-Ceph section injected into PV detail view with full CSI volume attributes
 - **Pod Detail Injection** — Ceph daemon role badge (Operator, MON, OSD, MGR, etc.) injected into matching Pod detail pages
-- **App Bar Badge** — cluster health badge (`rook-ceph: HEALTH_OK`) in top nav bar, color-coded; hidden when no CephCluster is present
 
 ### Data Sources
 
@@ -100,7 +99,6 @@ subjects:
 | **Plugin not in sidebar** | Plugin not installed or needs browser refresh | Hard refresh (Cmd+Shift+R / Ctrl+Shift+F5) |
 | **No CephCluster data** | CRDs not installed or RBAC insufficient | Verify `kubectl get cephclusters -n rook-ceph` works |
 | **Block Pools empty** | No CephBlockPool resources | Check `kubectl get cephblockpools -n rook-ceph` |
-| **App bar badge missing** | No CephCluster present | Verify rook-ceph is deployed with a CephCluster resource |
 | **StorageClass columns not showing** | Rook provisioner not matching | Verify SC provisioner ends in `.rbd.csi.ceph.com` or `.cephfs.csi.ceph.com` |
 
 ## Development
@@ -145,7 +143,6 @@ src/
     ├── VolumesPage.tsx                 # Rook-Ceph PV table + detail panel
     ├── PodsPage.tsx                    # Daemon pods grouped by role
     ├── ClusterStatusCard.tsx           # Reusable cluster health + capacity card
-    ├── AppBarClusterBadge.tsx          # App bar health badge
     ├── PVCDetailSection.tsx            # Injected into Headlamp PVC detail view
     ├── PVDetailSection.tsx             # Injected into Headlamp PV detail view
     ├── CephPodDetailSection.tsx        # Injected into Headlamp Pod detail view
