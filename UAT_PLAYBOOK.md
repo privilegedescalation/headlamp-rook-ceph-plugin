@@ -8,6 +8,29 @@ This document defines the browser-based validation steps for the Rook-Ceph Headl
 - A Rook-Ceph cluster is accessible (or test data is stubbed).
 - You are logged in to Headlamp and can see the sidebar.
 
+### Authenticating to headlamp-uat (PRI-2006)
+
+`headlamp-uat` requires authentication (it is OIDC-fronted via Authentik, but
+also accepts a direct bearer token on the Headlamp login screen). The UAT
+agent must use a dedicated, viewer-scoped credential — never an admin
+credential and never the `paperclip-app` service account.
+
+1. Open the `headlamp-uat` URL.
+2. On the login screen, use the token field (not "Sign in with Authentik").
+3. Paste the token from the agent's injected `HEADLAMP_UAT_TOKEN` env var.
+   Never type, paste, echo, or log this value into a chat transcript, PR
+   comment, issue, or file — env injection only.
+4. You should land on the sidebar once authenticated.
+
+This credential is read-only, scoped to the namespaces and resource kinds the
+rook plugin reads (`rook-ceph` Ceph CRDs/pods, plus cluster-scoped
+StorageClasses/PersistentVolumes/Namespaces). It cannot create, update, or
+delete anything.
+
+Provisioning of this credential (RBAC + ServiceAccount token, sealed via
+GitOps in the infra repo) is tracked separately and is a prerequisite for this
+playbook's steps to be run end-to-end by the UAT agent.
+
 ## 1. Top Navigation Bar
 
 ### 1.1 AppBarClusterBadge — removed (PRI-1993)
