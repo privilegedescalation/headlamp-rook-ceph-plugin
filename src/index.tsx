@@ -6,7 +6,6 @@
  */
 
 import {
-  registerAppBarAction,
   registerDetailsViewSection,
   registerResourceTableColumnsProcessor,
   registerRoute,
@@ -14,7 +13,6 @@ import {
 } from '@kinvolk/headlamp-plugin/lib';
 import React from 'react';
 import { RookCephDataProvider } from './api/RookCephDataContext';
-import AppBarClusterBadge from './components/AppBarClusterBadge';
 import BlockPoolsPage from './components/BlockPoolsPage';
 import CephPodDetailSection from './components/CephPodDetailSection';
 import FilesystemsPage from './components/FilesystemsPage';
@@ -97,16 +95,6 @@ registerSidebarEntry({
   url: '/rook-ceph/pods',
   icon: 'mdi:cube-outline',
 });
-
-// ---------------------------------------------------------------------------
-// App bar action — cluster health badge
-// ---------------------------------------------------------------------------
-
-registerAppBarAction(() => (
-  <RookCephDataProvider>
-    <AppBarClusterBadge />
-  </RookCephDataProvider>
-));
 
 // ---------------------------------------------------------------------------
 // Routes
