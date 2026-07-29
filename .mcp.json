@@ -16,8 +16,8 @@
       "url": "http://localhost:8081/sse"
     },
     "playwright": {
-      "type": "sse",
-      "url": "http://${PLAYWRIGHT_PRIVILEGEDESCALATION_SERVICE_HOST:-localhost}:${PLAYWRIGHT_PRIVILEGEDESCALATION_SERVICE_PORT:-8931}/sse"
+      "type": "http",
+      "url": "http://${PLAYWRIGHT_PRIVILEGEDESCALATION_SERVICE_HOST:-localhost}:${PLAYWRIGHT_PRIVILEGEDESCALATION_SERVICE_PORT:-8931}/mcp"
     }
   }
 }
