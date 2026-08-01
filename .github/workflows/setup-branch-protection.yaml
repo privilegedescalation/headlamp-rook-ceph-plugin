@@ -1,17 +1,21 @@
 name: "Setup Branch Protection (topology-hygiene, PRI-2060)"
 
-# One-time workflow: triggered manually to add topology-hygiene as a required
-# status check on main. After triggering, this file can be deleted via PR.
+# Runs once on merge to main to add topology-hygiene as a required status
+# check, then removes itself. Idempotent: no-ops if check already present.
 #
 # Why GITHUB_TOKEN with administration:write: Gandalf's GitHub App does not
 # have the administration permission on these repos (PRI-2060). The
 # github-actions[bot] GITHUB_TOKEN with administration:write is the only
-# available path to update branch protection without an admin token. (PRI-2060)
+# available path to update branch protection without an admin token.
 on:
-  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/setup-branch-protection.yaml"
 
 permissions:
   administration: write
+  contents: write
 
 jobs:
   setup:
@@ -68,3 +72,41 @@ jobs:
           echo "✓ '$CHECK_NAME' added as required status check on $REPO/main"
           echo "Final required checks:"
           echo "$RESULT" | jq '.checks'
+
+      - name: Self-remove this setup workflow
+        if: success()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          FILE_PATH=".github/workflows/setup-branch-protection.yaml"
+
+          # Get current file SHA on main
+          FILE_INFO=$(curl -sf \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$REPO/contents/$FILE_PATH?ref=main" 2>/dev/null || echo '{}')
+
+          FILE_SHA=$(echo "$FILE_INFO" | jq -r '.sha // empty')
+
+          if [ -z "$FILE_SHA" ]; then
+            echo "::warning::Could not find file SHA — skipping self-removal."
+            exit 0
+          fi
+
+          PAYLOAD=$(jq -n \
+            --arg msg "chore: remove one-time branch-protection setup workflow (PRI-2060)
+
+Co-Authored-By: Paperclip <noreply@paperclip.ing>" \
+            --arg sha "$FILE_SHA" \
+            --arg branch "main" \
+            '{"message": $msg, "sha": $sha, "branch": $branch}')
+
+          curl -sf -X DELETE \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$REPO/contents/$FILE_PATH" \
+            -d "$PAYLOAD" \
+          && echo "✓ Setup workflow self-removed from main." \
+          || echo "::warning::Self-removal failed — workflow file may remain (harmless, only runs on paths filter match)."
