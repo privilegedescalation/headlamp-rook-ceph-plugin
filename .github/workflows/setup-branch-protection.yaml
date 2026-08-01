@@ -8,6 +8,7 @@ name: "Setup Branch Protection (topology-hygiene, PRI-2060)"
 # github-actions[bot] GITHUB_TOKEN with administration:write is the only
 # available path to update branch protection without an admin token.
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
