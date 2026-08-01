@@ -6,20 +6,13 @@ on:
   pull_request:
     branches: [main, dev, uat]
   workflow_dispatch:
-  workflow_call:
-    inputs:
-      node-version:
-        description: 'Node.js version to use'
-        required: false
-        type: string
-        default: '22'
 
 permissions:
   contents: read
 
 jobs:
   ci:
-    runs-on: ubuntu-latest
+    runs-on: runners-privilegedescalation
     timeout-minutes: 10
 
     steps:
@@ -27,7 +20,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Install Python
-        run: sudo apt-get update && sudo apt-get install -y python3 python3-yaml || true
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends python3 python3-yaml || true
 
       - name: Validate artifacthub-pkg.yml
         run: |
@@ -93,7 +86,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: ${{ inputs.node-version }}
+          node-version: '22'
           cache: ${{ steps.pkg-manager.outputs.manager == 'npm' && 'npm' || '' }}
 
       - name: Setup pnpm (via Corepack, reads version from packageManager field)
@@ -143,7 +136,6 @@ jobs:
             if grep -q "CONFIG_MISMATCH\|EBADLOCKFILE\|ERR_PNPM_LOCKFILE" "$ERR_FILE"; then
               echo ""
               echo "::error::pnpm-lock.yaml is out of sync with package.json overrides."
-              echo "::error::This typically happens when transitive dependencies change but the lockfile wasn't regenerated."
               echo "::error::Run 'pnpm install' to regenerate the lockfile and commit the updated pnpm-lock.yaml."
               rm -f "$ERR_FILE"
               exit 1
