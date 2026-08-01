@@ -18,13 +18,12 @@ permissions:
 jobs:
   promotion-gate:
     name: Promotion Gate
-    runs-on: ubuntu-latest
-    container: ubuntu:latest
+    runs-on: runners-privilegedescalation
     timeout-minutes: 5
 
     steps:
       - name: Install dependencies
-        run: apt-get update -qq && apt-get install -y --no-install-recommends ca-certificates curl jq
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends ca-certificates curl jq
 
       - name: Check promotion approval
         env:
@@ -93,7 +92,7 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/${REPO}/pulls/${PR_NUMBER}")
 
-          PR_AUTHOR=$(printf '%s' "${PR_DATA}" | jq -r '.user.login')
+          PR_AUTHOR=$(echo "${PR_DATA}" | jq -r '.user.login')
           echo "PR author: ${PR_AUTHOR}"
 
           # Guard: PR author matches required reviewer — gate cannot be satisfied.
