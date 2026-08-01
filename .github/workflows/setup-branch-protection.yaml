@@ -97,9 +97,7 @@ jobs:
           fi
 
           PAYLOAD=$(jq -n \
-            --arg msg "chore: remove one-time branch-protection setup workflow (PRI-2060)
-
-Co-Authored-By: Paperclip <noreply@paperclip.ing>" \
+            --arg msg "$(printf 'chore: remove one-time branch-protection setup workflow (PRI-2060)\n\nCo-Authored-By: Paperclip <noreply@paperclip.ing>')" \
             --arg sha "$FILE_SHA" \
             --arg branch "main" \
             '{"message": $msg, "sha": $sha, "branch": $branch}')
