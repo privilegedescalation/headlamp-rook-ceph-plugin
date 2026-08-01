@@ -1,0 +1,70 @@
+name: "Setup Branch Protection (topology-hygiene, PRI-2060)"
+
+# One-time workflow: triggered manually to add topology-hygiene as a required
+# status check on main. After triggering, this file can be deleted via PR.
+#
+# Why GITHUB_TOKEN with administration:write: Gandalf's GitHub App does not
+# have the administration permission on these repos (PRI-2060). The
+# github-actions[bot] GITHUB_TOKEN with administration:write is the only
+# available path to update branch protection without an admin token. (PRI-2060)
+on:
+  workflow_dispatch:
+
+permissions:
+  administration: write
+
+jobs:
+  setup:
+    name: Add topology-hygiene required status check
+    runs-on: runners-privilegedescalation
+    timeout-minutes: 5
+    steps:
+      - name: Add topology-hygiene to required status checks on main
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          CHECK_NAME="topology-hygiene / topology-hygiene"
+          APP_ID=15368
+
+          # Fetch current branch protection
+          CURRENT_BP=$(curl -sf \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$REPO/branches/main/protection" 2>/dev/null || echo '{}')
+
+          EXISTING_CHECKS=$(echo "$CURRENT_BP" | jq '.required_status_checks.checks // []')
+          STRICT=$(echo "$CURRENT_BP" | jq '.required_status_checks.strict // false')
+
+          echo "Existing required checks: $EXISTING_CHECKS"
+
+          # Idempotency: skip if already present
+          if echo "$EXISTING_CHECKS" | jq -e --arg cn "$CHECK_NAME" 'any(.[]; .context == $cn)' > /dev/null 2>&1; then
+            echo "✓ '$CHECK_NAME' is already a required status check — nothing to do."
+            exit 0
+          fi
+
+          # Append topology-hygiene to existing checks
+          UPDATED=$(echo "$EXISTING_CHECKS" | \
+            jq --arg cn "$CHECK_NAME" --argjson aid "$APP_ID" \
+            '. + [{"context": $cn, "app_id": $aid}]')
+
+          echo "Updated required checks: $UPDATED"
+
+          # Apply via PATCH (non-destructive: only touches required_status_checks)
+          RESULT=$(curl -s -X PATCH \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$REPO/branches/main/protection/required_status_checks" \
+            -d "{\"strict\": $STRICT, \"checks\": $UPDATED}")
+
+          if echo "$RESULT" | jq -e '.message' > /dev/null 2>&1; then
+            echo "✗ Error: $(echo "$RESULT" | jq -r '.message')"
+            echo "Full response: $RESULT"
+            exit 1
+          fi
+
+          echo "✓ '$CHECK_NAME' added as required status check on $REPO/main"
+          echo "Final required checks:"
+          echo "$RESULT" | jq '.checks'
